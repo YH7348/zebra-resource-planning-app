@@ -46,11 +46,11 @@ export function AppSidebar({ onCollapsedChange }: { onCollapsedChange?: (collaps
         <NavLink to="/" className="flex flex-col items-center gap-2">
           {!collapsed && (
             <div className="flex flex-col items-center animate-fade-in gap-2">
-              <img src="/zebra-logo.svg" alt="Zebra ResourceHub" className="w-32" />
+              <img src={`${import.meta.env.BASE_URL}zebra-logo.svg`} alt="Zebra ResourceHub" className="w-32" />
             </div>
           )}
           {collapsed && (
-            <img src="/zebra-logo.svg" alt="Zebra ResourceHub" className="w-10 h-10 mx-auto" />
+            <img src={`${import.meta.env.BASE_URL}zebra-logo.svg`} alt="Zebra ResourceHub" className="w-10 h-10 mx-auto" />
           )}
         </NavLink>
         <button
