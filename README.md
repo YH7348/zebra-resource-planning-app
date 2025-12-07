@@ -45,7 +45,7 @@ Clone the repository and install dependencies:
 
 ```bash
 git clone <repository-url>
-cd zebra-resource-planner
+cd zebra-resource-planning-app
 npm install
 ```
 
