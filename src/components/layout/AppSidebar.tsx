@@ -2,12 +2,10 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Calendar,
-  Clock,
   Users,
   FolderKanban,
   BarChart3,
   Plus,
-  Settings,
   ChevronLeft,
   Menu,
 } from "lucide-react";
@@ -16,9 +14,8 @@ import { useState } from "react";
 
 const navItems = [
   { title: "Dashboard", path: "/", icon: LayoutDashboard },
-  { title: "Bookings", path: "/bookings", icon: Plus },
+  { title: "Allocations", path: "/allocations", icon: Plus },
   { title: "Schedule", path: "/schedule", icon: Calendar },
-  { title: "Timesheets", path: "/timesheets", icon: Clock },
   { title: "People", path: "/people", icon: Users },
   { title: "Projects", path: "/projects", icon: FolderKanban },
   { title: "Reports", path: "/reports", icon: BarChart3 },
@@ -93,23 +90,6 @@ export function AppSidebar({ onCollapsedChange }: { onCollapsedChange?: (collaps
           );
         })}
       </nav>
-
-      {/* Settings */}
-      <div className="p-3 border-t border-sidebar-border">
-        <NavLink
-          to="/settings"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-            "text-black",
-            "hover:bg-[hsl(var(--zebra-lime))] hover:text-black hover:font-medium",
-            location.pathname === "/settings" && "bg-[hsl(var(--zebra-lime))] text-black font-medium shadow-sm",
-            collapsed && "justify-center px-2"
-          )}
-        >
-          <Settings className="w-5 h-5 shrink-0" />
-          {!collapsed && <span>Settings</span>}
-        </NavLink>
-      </div>
     </aside>
   );
 }

@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import mockData from "@/services/mockData";
 
-interface NewBooking {
+interface NewAllocation {
   resourceId: string;
   resourceName: string;
   projectId: string;
@@ -29,11 +29,11 @@ interface NewBooking {
   monthlyWorkdays: { [key: string]: number };
 }
 
-export default function Bookings() {
+export default function Allocations() {
   const resources = mockData.getResources();
   const projects = mockData.getProjects();
   const allocations = mockData.getProjectAllocations();
-  const [newBookings, setNewBookings] = useState<NewBooking[]>([]);
+  const [newAllocations, setNewAllocations] = useState<NewAllocation[]>([]);
 
   const [formData, setFormData] = useState({
     resourceId: "",
@@ -102,7 +102,7 @@ export default function Bookings() {
     });
   };
 
-  const handleCreateBooking = () => {
+  const handleCreateAllocation = () => {
     if (!formData.resourceId || !formData.projectId) {
       alert("Please select both resource and project");
       return;
@@ -119,7 +119,7 @@ export default function Bookings() {
       monthlyWorkdays[month] = workdays[month];
     });
 
-    const newBooking: NewBooking = {
+    const newAllocation: NewAllocation = {
       resourceId: selectedResource.id,
       resourceName: selectedResource.name,
       projectId: selectedProject.id,
@@ -133,7 +133,7 @@ export default function Bookings() {
       monthlyWorkdays,
     };
 
-    setNewBookings([...newBookings, newBooking]);
+    setNewAllocations([...newAllocations, newAllocation]);
 
     // Reset form
     setFormData({
@@ -155,66 +155,66 @@ export default function Bookings() {
       decemberFte: "0.5",
     });
 
-    alert(`✓ Booking created for ${selectedResource.name} on ${selectedProject.name}`);
+    alert(`✓ Allocation created for ${selectedResource.name} on ${selectedProject.name}`);
   };
 
-  const calculateTotalCost = (booking: NewBooking) => {
+  const calculateTotalCost = (allocation: NewAllocation) => {
     let total = 0;
     months.forEach(({ month }) => {
-      const fte = booking.monthlyAllocations[month] || 0;
-      const days = booking.monthlyWorkdays[month] || 21;
-      const monthlyCost = booking.hourlyRate * fte * days * 8;
+      const fte = allocation.monthlyAllocations[month] || 0;
+      const days = allocation.monthlyWorkdays[month] || 21;
+      const monthlyCost = allocation.hourlyRate * fte * days * 8;
       total += monthlyCost;
     });
     return total;
   };
 
-  const calculateMonthCost = (booking: NewBooking, month: string) => {
-    const fte = booking.monthlyAllocations[month] || 0;
-    const days = booking.monthlyWorkdays[month] || 21;
-    return booking.hourlyRate * fte * days * 8;
+  const calculateMonthCost = (allocation: NewAllocation, month: string) => {
+    const fte = allocation.monthlyAllocations[month] || 0;
+    const days = allocation.monthlyWorkdays[month] || 21;
+    return allocation.hourlyRate * fte * days * 8;
   };
 
-  const deleteBooking = (index: number) => {
-    setNewBookings(newBookings.filter((_, i) => i !== index));
+  const deleteAllocation = (index: number) => {
+    setNewAllocations(newAllocations.filter((_, i) => i !== index));
   };
 
-  const totalNewBookingsCost = newBookings.reduce(
-    (sum, booking) => sum + calculateTotalCost(booking),
+  const totalNewAllocationsCost = newAllocations.reduce(
+    (sum, allocation) => sum + calculateTotalCost(allocation),
     0
   );
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="animate-fade-in">
-        <h1 className="text-2xl font-semibold text-black">Manage Bookings</h1>
+      <div>
+        <h1 className="text-2xl font-semibold text-black">Manage Allocations</h1>
         <p className="text-muted-foreground mt-1">
           Create and manage resource allocations for projects
         </p>
       </div>
 
-      <Tabs defaultValue="create" className="animate-slide-in">
+      <Tabs defaultValue="create">
         <TabsList className="mb-6">
-          <TabsTrigger value="create">Create New Booking</TabsTrigger>
+          <TabsTrigger value="create">Create New Allocation</TabsTrigger>
           <TabsTrigger value="active" className="relative">
-            Active Bookings ({allocations.length})
+            Active Allocations ({allocations.length})
           </TabsTrigger>
           <TabsTrigger value="pending" className="relative">
-            Pending Bookings ({newBookings.length})
-            {newBookings.length > 0 && (
+            Pending Allocations ({newAllocations.length})
+            {newAllocations.length > 0 && (
               <span className="ml-2 w-5 h-5 rounded-full bg-status-warning text-background text-xs flex items-center justify-center">
-                {newBookings.length}
+                {newAllocations.length}
               </span>
             )}
           </TabsTrigger>
         </TabsList>
 
-        {/* Create New Booking Tab */}
+        {/* Create New Allocation Tab */}
         <TabsContent value="create" className="space-y-6">
-          <Card className="p-6 animate-slide-in">
+          <Card className="p-6">
             <h2 className="text-lg font-semibold mb-6 text-black">
-              Create New Booking
+              Create New Allocation
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -372,39 +372,39 @@ export default function Bookings() {
                 Clear Form
               </Button>
               <Button
-                onClick={handleCreateBooking}
+                onClick={handleCreateAllocation}
                 className="gap-2 bg-[hsl(var(--zebra-lime))] text-black hover:brightness-95 font-medium"
               >
                 <Plus className="w-4 h-4" />
-                Create Booking
+                Create Allocation
               </Button>
             </div>
           </Card>
         </TabsContent>
 
-        {/* Active Bookings Tab */}
+        {/* Active Allocations Tab */}
         <TabsContent value="active" className="space-y-4">
           {allocations.length > 0 ? (
-            allocations.map((booking, index) => {
+            allocations.map((allocation, index) => {
               const totalCost = months.reduce((sum, { month }) => {
-                const fte = booking.monthlyAllocations[month] || 0;
-                const days = booking.monthlyWorkdays[month] || 21;
-                return sum + booking.hourlyRate * fte * days * 8;
+                const fte = allocation.monthlyAllocations[month] || 0;
+                const days = allocation.monthlyWorkdays[month] || 21;
+                return sum + allocation.hourlyRate * fte * days * 8;
               }, 0);
 
               return (
                 <Card
                   key={index}
-                  className="p-6 animate-slide-in"
+                  className="p-6"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-semibold text-black">
-                        {booking.resourceName}
+                        {allocation.resourceName}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {booking.projectName} • {booking.role}
+                        {allocation.projectName} • {allocation.role}
                       </p>
                     </div>
                     <Badge
@@ -419,14 +419,14 @@ export default function Bookings() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-muted rounded-lg">
                     <div>
                       <p className="text-xs text-muted-foreground">Vendor</p>
-                      <p className="font-semibold text-black">{booking.vendor}</p>
+                      <p className="font-semibold text-black">{allocation.vendor}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">
                         Hourly Rate
                       </p>
                       <p className="font-semibold text-black">
-                        ${booking.hourlyRate.toFixed(2)}/hr
+                        ${allocation.hourlyRate.toFixed(2)}/hr
                       </p>
                     </div>
                     <div>
@@ -434,7 +434,7 @@ export default function Bookings() {
                         Period
                       </p>
                       <p className="font-semibold text-black">
-                        {booking.startDate} to {booking.endDate}
+                        {allocation.startDate} to {allocation.endDate}
                       </p>
                     </div>
                     <div>
@@ -457,11 +457,11 @@ export default function Bookings() {
                     </h4>
                     <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-12 gap-2">
                       {months.map(({ label, month }) => {
-                        const fte = booking.monthlyAllocations[month] || 0;
+                        const fte = allocation.monthlyAllocations[month] || 0;
                         const cost = (
-                          booking.hourlyRate *
+                          allocation.hourlyRate *
                           fte *
-                          (booking.monthlyWorkdays[month] || 21) *
+                          (allocation.monthlyWorkdays[month] || 21) *
                           8
                         ).toFixed(0);
                         return (
@@ -489,41 +489,41 @@ export default function Bookings() {
           ) : (
             <Card className="p-6 text-center text-muted-foreground">
               <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p>No active bookings yet</p>
+              <p>No active allocations yet</p>
             </Card>
           )}
         </TabsContent>
 
-        {/* Pending Bookings Tab */}
+        {/* Pending Allocations Tab */}
         <TabsContent value="pending" className="space-y-4">
-          {newBookings.length > 0 ? (
+          {newAllocations.length > 0 ? (
             <>
               <div className="p-4 bg-status-warning/10 border border-status-warning/20 rounded-lg">
                 <p className="text-sm font-medium text-black">
-                  Total Pending Bookings Cost: $
-                  {totalNewBookingsCost.toLocaleString("en-US", {
+                  Total Pending Allocations Cost: $
+                  {totalNewAllocationsCost.toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </p>
               </div>
 
-              {newBookings.map((booking, index) => {
-                const totalCost = calculateTotalCost(booking);
+              {newAllocations.map((allocation, index) => {
+                const totalCost = calculateTotalCost(allocation);
 
                 return (
                   <Card
                     key={index}
-                    className="p-6 animate-slide-in"
+                    className="p-6"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h3 className="text-lg font-semibold text-black">
-                          {booking.resourceName}
+                          {allocation.resourceName}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          {booking.projectName} • {booking.role}
+                          {allocation.projectName} • {allocation.role}
                         </p>
                       </div>
                       <Badge
@@ -541,7 +541,7 @@ export default function Bookings() {
                           Vendor
                         </p>
                         <p className="font-semibold text-black">
-                          {booking.vendor}
+                          {allocation.vendor}
                         </p>
                       </div>
                       <div>
@@ -549,7 +549,7 @@ export default function Bookings() {
                           Hourly Rate
                         </p>
                         <p className="font-semibold text-black">
-                          ${booking.hourlyRate.toFixed(2)}/hr
+                          ${allocation.hourlyRate.toFixed(2)}/hr
                         </p>
                       </div>
                       <div>
@@ -557,7 +557,7 @@ export default function Bookings() {
                           Period
                         </p>
                         <p className="font-semibold text-black">
-                          {booking.startDate} to {booking.endDate}
+                          {allocation.startDate} to {allocation.endDate}
                         </p>
                       </div>
                       <div>
@@ -580,8 +580,8 @@ export default function Bookings() {
                       </h4>
                       <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-12 gap-2">
                         {months.map(({ label, month }) => {
-                          const fte = booking.monthlyAllocations[month] || 0;
-                          const cost = calculateMonthCost(booking, month);
+                          const fte = allocation.monthlyAllocations[month] || 0;
+                          const cost = calculateMonthCost(allocation, month);
                           return (
                             <div
                               key={month}
@@ -608,12 +608,12 @@ export default function Bookings() {
                         className="flex-1 bg-[hsl(var(--zebra-lime))] text-black hover:brightness-95 font-medium"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Approve Booking
+                        Approve Allocation
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => deleteBooking(index)}
+                        onClick={() => deleteAllocation(index)}
                         className="text-status-error hover:bg-status-error/10"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -626,7 +626,7 @@ export default function Bookings() {
           ) : (
             <Card className="p-6 text-center text-muted-foreground">
               <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p>No pending bookings</p>
+              <p>No pending allocations</p>
             </Card>
           )}
         </TabsContent>
