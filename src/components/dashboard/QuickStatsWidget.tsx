@@ -1,3 +1,5 @@
+"use client";
+
 import { TrendingUp, Users, FolderKanban, DollarSign } from "lucide-react";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";

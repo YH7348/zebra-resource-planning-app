@@ -1,4 +1,7 @@
-import { NavLink, useLocation } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Calendar,
@@ -22,7 +25,7 @@ const navItems = [
 ];
 
 export function AppSidebar({ onCollapsedChange }: { onCollapsedChange?: (collapsed: boolean) => void }) {
-  const location = useLocation();
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
   const handleCollapse = () => {
@@ -40,16 +43,16 @@ export function AppSidebar({ onCollapsedChange }: { onCollapsedChange?: (collaps
     >
       {/* Logo Section */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
-        <NavLink to="/" className="flex flex-col items-center gap-2">
+        <Link href="/" className="flex flex-col items-center gap-2">
           {!collapsed && (
             <div className="flex flex-col items-center animate-fade-in gap-2">
-              <img src={`${import.meta.env.BASE_URL}zebra-logo.svg`} alt="Zebra ResourceHub" className="w-32" />
+              <img src="/zebra-logo.svg" alt="Zebra ResourceHub" className="w-32" />
             </div>
           )}
           {collapsed && (
-            <img src={`${import.meta.env.BASE_URL}zebra-logo.svg`} alt="Zebra ResourceHub" className="w-10 h-10 mx-auto" />
+            <img src="/zebra-logo.svg" alt="Zebra ResourceHub" className="w-10 h-10 mx-auto" />
           )}
-        </NavLink>
+        </Link>
         <button
           onClick={handleCollapse}
           className={cn(
@@ -68,11 +71,11 @@ export function AppSidebar({ onCollapsedChange }: { onCollapsedChange?: (collaps
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item, index) => {
-          const isActive = location.pathname === item.path;
+          const isActive = pathname === item.path;
           return (
-            <NavLink
+            <Link
               key={item.path}
-              to={item.path}
+              href={item.path}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                 "text-black",
@@ -86,7 +89,7 @@ export function AppSidebar({ onCollapsedChange }: { onCollapsedChange?: (collaps
               {!collapsed && (
                 <span className="animate-fade-in">{item.title}</span>
               )}
-            </NavLink>
+            </Link>
           );
         })}
       </nav>
