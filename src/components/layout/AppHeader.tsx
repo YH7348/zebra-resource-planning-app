@@ -1,10 +1,13 @@
+"use client";
+
 import { Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 export function AppHeader() {
-  const navigate = useNavigate();
+  const router = useRouter();
+  
   return (
     <header className="h-16 border-b border-border bg-background flex items-center justify-between px-6">
       {/* Search */}
@@ -21,7 +24,7 @@ export function AppHeader() {
         <Button
           size="sm"
           className="gap-2 bg-primary text-primary-foreground hover:brightness-95"
-          onClick={() => navigate("/allocations")}
+          onClick={() => router.push("/allocations")}
         >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">New Allocation</span>
