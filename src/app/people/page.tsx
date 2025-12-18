@@ -1,50 +1,115 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, MapPin, Building2, Briefcase } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Search, MapPin, Building2, Briefcase, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import mockData from "@/services/mockData";
+
+// Define the TeamDetails type based on BigQuery table schema
+interface TeamDetails {
+  NAME: string | null;
+  TECHNOLOGY: string | null;
+  COMPANY: string | null;
+  LOCATION: string | null;
+  BU: string | null;
+  PROJECT_TIED_TO: string | null;
+  CURRENT_END_DATE: string | null;
+  START_DATE: string | null;
+  NEW_END_DATE: string | null;
+  INDIVIDUALK: number | null;
+  TOTAL: number | null;
+  FUTURE_ASSIGNMENTS: string | null;
+  SOW_BILLED_UNDER: string | null;
+  COMMENTS: string | null;
+}
 
 export default function PeoplePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCompany, setFilterCompany] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [teamDetails, setTeamDetails] = useState<TeamDetails[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const resources = mockData.getResources();
-  const vendors = mockData.getVendors();
+  // Fetch data from BigQuery on component mount
+  useEffect(() => {
+    const fetchTeamDetails = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/team-details");
+        const result = await response.json();
+
+        if (result.success) {
+          setTeamDetails(result.data);
+        } else {
+          setError(result.error || "Failed to fetch team details");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch team details");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTeamDetails();
+  }, []);
+
+  // Get unique companies for filter
+  const companies = useMemo(() => {
+    const companyList = teamDetails.map((t) => t.COMPANY).filter((c): c is string => c !== null && c !== undefined);
+    return Array.from(new Set(companyList));
+  }, [teamDetails]);
 
   const filteredResources = useMemo(() => {
-    return resources.filter((resource) => {
+    return teamDetails.filter((person) => {
       const matchesSearch =
-        resource.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        resource.skills.some((skill) =>
-          skill.toLowerCase().includes(searchTerm.toLowerCase())
-        ) ||
-        resource.businessUnit.toLowerCase().includes(searchTerm.toLowerCase());
+        (person.NAME?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (person.TECHNOLOGY?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (person.BU?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (person.PROJECT_TIED_TO?.toLowerCase() || "").includes(searchTerm.toLowerCase());
 
-      const matchesCompany = !filterCompany || resource.company === filterCompany;
-      const matchesStatus = !filterStatus || resource.status === filterStatus;
+      const matchesCompany = !filterCompany || person.COMPANY === filterCompany;
 
-      return matchesSearch && matchesCompany && matchesStatus;
+      return matchesSearch && matchesCompany;
     });
-  }, [searchTerm, filterCompany, filterStatus, resources]);
+  }, [searchTerm, filterCompany, teamDetails]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-status-success/10 text-status-success border-status-success/20";
-      case "planned":
-        return "bg-status-info/10 text-status-info border-status-info/20";
-      case "ending":
-        return "bg-color-message-yellow-background text-color-message-yellow border-color-message-yellow/20";
-      case "ended":
-        return "bg-color-message-red-background text-color-message-red border-color-message-red/20";
-      default:
-        return "bg-gray-100 text-gray-700";
+  // Format date for display
+  const formatDate = (dateValue: string | null) => {
+    if (!dateValue) return "N/A";
+    try {
+      const date = new Date(dateValue);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return dateValue;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--zebra-lime))]" />
+          <p className="text-muted-foreground">Loading team details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <p className="font-semibold">Error loading team details</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -70,7 +135,7 @@ export default function PeoplePage() {
 
         <div className="flex gap-2 flex-wrap">
           {/* Company Filter */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setFilterCompany(null)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -81,44 +146,17 @@ export default function PeoplePage() {
             >
               All Companies
             </button>
-            {vendors.map((vendor) => (
+            {companies.map((company) => (
               <button
-                key={vendor.id}
-                onClick={() => setFilterCompany(vendor.name)}
+                key={company}
+                onClick={() => setFilterCompany(company)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  filterCompany === vendor.name
+                  filterCompany === company
                     ? "bg-[hsl(var(--zebra-lime))] text-black"
                     : "bg-gray-100 text-black hover:bg-gray-200"
                 }`}
               >
-                {vendor.name}
-              </button>
-            ))}
-          </div>
-
-          {/* Status Filter */}
-          <div className="flex gap-2 ml-auto">
-            <button
-              onClick={() => setFilterStatus(null)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filterStatus === null
-                  ? "bg-[hsl(var(--zebra-lime))] text-black"
-                  : "bg-gray-100 text-black hover:bg-gray-200"
-              }`}
-            >
-              All Status
-            </button>
-            {["active", "planned", "ending", "ended"].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${
-                  filterStatus === status
-                    ? "bg-[hsl(var(--zebra-lime))] text-black"
-                    : "bg-gray-100 text-black hover:bg-gray-200"
-                }`}
-              >
-                {status}
+                {company}
               </button>
             ))}
           </div>
@@ -127,102 +165,102 @@ export default function PeoplePage() {
 
       {/* Resources Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredResources.map((resource, index) => (
+        {filteredResources.map((person, index) => (
           <Card
-            key={resource.id}
+            key={`${person.NAME}-${index}`}
             className="p-4 hover:shadow-md transition-all duration-200 animate-slide-in"
             style={{ animationDelay: `${index * 0.05}s` }}
           >
             <div className="space-y-3">
-              {/* Header with Name and Status */}
+              {/* Header with Name */}
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-semibold text-black text-lg">
-                    {resource.name}
+                    {person.NAME || "Unknown"}
                   </h3>
-                  {resource.role && (
-                    <p className="text-sm text-muted-foreground">
-                      {resource.role}
-                    </p>
+                  {person.TECHNOLOGY && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-50 text-green-700 border-green-200 mt-1"
+                    >
+                      {person.TECHNOLOGY}
+                    </Badge>
                   )}
                 </div>
-                <Badge
-                  className={`${getStatusColor(resource.status)} border`}
-                  variant="outline"
-                >
-                  {resource.status}
-                </Badge>
               </div>
 
               {/* Company and Location */}
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-gray-700" />
-                  <span className="text-black font-medium">{resource.company}</span>
-                  {resource.vendor && (
-                    <span className="text-muted-foreground">
-                      ({resource.vendor})
-                    </span>
-                  )}
+                  <span className="text-black font-medium">{person.COMPANY || "N/A"}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-700" />
-                  <span className="text-muted-foreground">{resource.location}</span>
+                  <span className="text-muted-foreground">{person.LOCATION || "N/A"}</span>
                 </div>
               </div>
 
-              {/* Department and Project */}
+              {/* Business Unit and Project */}
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Briefcase className="w-4 h-4 text-gray-700" />
                   <span className="text-muted-foreground">
-                    {resource.businessUnit}
+                    {person.BU || "N/A"}
                   </span>
                 </div>
-                {resource.currentProject && resource.currentProject !== "Unassigned" && (
+                {person.PROJECT_TIED_TO && (
                   <div className="px-2 py-1 bg-color-blue-50 rounded text-color-blue-700 text-xs font-medium">
-                    {resource.currentProject}
+                    {person.PROJECT_TIED_TO}
                   </div>
                 )}
               </div>
 
-              {/* Skills */}
-              {resource.skills && resource.skills.length > 0 && (
-                <div className="space-y-2">
+              {/* Future Assignments */}
+              {person.FUTURE_ASSIGNMENTS && (
+                <div className="space-y-1">
                   <p className="text-xs font-semibold text-gray-700 uppercase">
-                    Skills
+                    Future Assignments
                   </p>
-                  <div className="flex flex-wrap gap-1">
-                    {resource.skills.map((skill, i) => (
-                      <Badge
-                        key={i}
-                        variant="secondary"
-                        className="bg-green-50 text-green-700 border-green-200"
-                      >
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
+                  <p className="text-sm text-muted-foreground">{person.FUTURE_ASSIGNMENTS}</p>
                 </div>
               )}
 
               {/* Contract Dates */}
               <div className="pt-2 border-t border-gray-200 text-xs text-muted-foreground space-y-1">
-                <div>Start: {resource.startDate}</div>
-                <div>End: {resource.endDate}</div>
-                {resource.hourlyRate && (
+                <div>Start: {formatDate(person.START_DATE)}</div>
+                <div>Current End: {person.CURRENT_END_DATE || "N/A"}</div>
+                {person.NEW_END_DATE && (
+                  <div className="text-green-600 font-medium">New End: {formatDate(person.NEW_END_DATE)}</div>
+                )}
+                {person.INDIVIDUALK !== null && (
                   <div className="font-semibold text-black">
-                    Rate: ${resource.hourlyRate}/hr
+                    Individual K: ${person.INDIVIDUALK?.toLocaleString()}
+                  </div>
+                )}
+                {person.TOTAL !== null && (
+                  <div className="font-semibold text-black">
+                    Total: ${person.TOTAL?.toLocaleString()}
                   </div>
                 )}
               </div>
 
               {/* SOW Reference */}
-              {resource.sowBilledUnder && (
+              {person.SOW_BILLED_UNDER && (
                 <div className="pt-2 border-t border-gray-200 text-xs">
                   <span className="text-gray-600">SOW: </span>
                   <span className="font-medium text-black">
-                    {resource.sowBilledUnder}
+                    {person.SOW_BILLED_UNDER}
+                  </span>
+                </div>
+              )}
+
+              {/* Comments */}
+              {person.COMMENTS && (
+                <div className="pt-2 border-t border-gray-200 text-xs">
+                  <span className="text-gray-600">Comments: </span>
+                  <span className="text-muted-foreground">
+                    {person.COMMENTS}
                   </span>
                 </div>
               )}
